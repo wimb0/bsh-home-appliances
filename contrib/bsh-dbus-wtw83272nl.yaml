@@ -97,6 +97,7 @@ sensor:
     filters:
       - lambda: return x / 60.0;
     unit_of_measurement: min
+
   - platform: bshdbus
     dest: 0x21
     command: 0x1002
@@ -137,21 +138,6 @@ text_sensor:
             - 13 -> Kreukherstellend strijkdroog
             - 14 -> Kreukherstellend kastdroog
             - 15 -> Kreukherstellend kastdroog extra
-            - 16 -> Dessous
-  - platform: bshdbus
-    dest: 0x11
-    command: 0x1006
-    text_sensors:
-      - id: bsh_dryer_fine_adjust
-        name: Trockengrad
-        icon: mdi:white-balance-sunny
-        lambda: return std::to_string(x[4]);
-        filters:
-          - map:
-            - 6 -> Aus
-            - 8 -> I
-            - 10 -> II
-            - 12 -> III
 
   - platform: bshdbus
     dest: 0x22
@@ -160,12 +146,21 @@ text_sensor:
       - id: bsh_dryer_door
         name: Deur
         icon: mdi:door
-        lambda: return std::to_string(x[5]);
+        lambda: return std::to_string(x[5] & 0x40);
         filters:
           - map:
             - 0 -> Open
             - 64 -> Gesloten
-            
+
+      - id: bsh_dryer_signal
+        name: "Signaal"
+        icon: mdi:volume-high
+        lambda: return std::to_string(x[5] & 0x01);
+        filters:
+          - map:
+              - 0 -> Uit
+              - 1 -> Aan
+
       - id: bsh_dryer_anti_crease
         name: "Antikreuk Status"
         icon: mdi:Waves
@@ -175,7 +170,7 @@ text_sensor:
             - 0 -> Uit
             - 16 -> Aan
 
-      - id: bsh_dryer_delicaat
+      - id: bsh_dryer_delicate
         name: "Delicaat"
         icon: mdi:feather
         lambda: return std::to_string(x[4] & 0x01);
@@ -198,6 +193,7 @@ text_sensor:
             - 12 -> Bereit/Pause
             - 20 -> Aus
             - 22 -> Läuft
+
   - platform: bshdbus
     dest: 0x11
     command: 0x1001
@@ -213,6 +209,7 @@ text_sensor:
             - 3 -> Startbereit
             - 35 -> Gestartet
             - 36 -> verzögerter Start
+
   - platform: bshdbus
     dest: 0x21
     command: 0x1004
@@ -225,6 +222,7 @@ text_sensor:
           - map:
             - 12 -> Bereit/Pause
             - 22 -> Läuft
+
   - platform: bshdbus
     dest: 0x11
     command: 0x1006
