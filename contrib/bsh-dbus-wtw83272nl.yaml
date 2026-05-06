@@ -12,9 +12,6 @@
 # Code optimized for BSH-Board by Bouni:
 # https://github.com/Bouni/BSH-Board
 #
-# More info:
-# https://github.com/hn/bsh-home-appliances/discussions/51
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3.0 as
 # published by the Free Software Foundation.
@@ -193,6 +190,7 @@ sensor:
     command: 0x1054
     sensors:
       - name: "Resterende Minuten"
+        id: resterende_minuten_id
         unit_of_measurement: "min"
         accuracy_decimals: 0
         icon: mdi:timer-sand
@@ -216,7 +214,21 @@ sensor:
           }
 
           return (float)val;
-          
+  # 5. Verwachte Eindtijd (Timestamp variant)
+  - platform: template
+    name: "Verwachte Eindtijd"
+    id: verwachte_eindtijd
+    device_class: timestamp
+    icon: mdi:clock-check
+    update_interval: 30s
+    lambda: |-
+      float mins = id(resterende_minuten_id).state;
+      
+      if (isnan(mins) || mins <= 0 || id(machine_status).state != "Bezig") {
+        return NAN;
+      }
+
+      return id(ha_time).now().timestamp + (mins * 60);         
 switch:
   - platform: restart
     name: "${dev_name}_reboot"
