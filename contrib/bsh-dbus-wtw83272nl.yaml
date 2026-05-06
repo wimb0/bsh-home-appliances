@@ -198,25 +198,29 @@ sensor:
         accuracy_decimals: 0
         icon: mdi:timer-sand
         lambda: |-
-          if (id(current_display_text).find("End") != std::string::npos) return 0.0f;
-          if (id(machine_status).state == "Klaar") return 0.0f;
+                  if (id(current_display_text).find("End") != std::string::npos) return 0.0f;
+                  if (id(machine_status).state == "Klaar") return 0.0f;
 
-          int val = 0;
-          int count = 0;
-          for (auto v : x) {
-            if (isdigit(v)) {
-              val = val * 10 + (v - '0');
-              count++;
-            }
-          }
+                  int val = 0;
+                  int count = 0;
+                  for (auto v : x) {
+                    if (isdigit(v)) {
+                      val = val * 10 + (v - '0');
+                      count++;
+                    }
+                  }
 
-          if (count == 0) return NAN;
+                  if (count == 0) return NAN;
 
-          if (count == 3) {
-            return (float)((val / 100) * 60 + (val % 100));
-          }
-
-          return (float)val;
+                  // Als we 3 cijfers hebben (zoals 047 of 254)
+                  if (count == 3) {
+                    int h = val / 100;
+                    int m = val % 100;
+                    if (m < 60) return (float)(h * 60 + m);
+                  }
+                  
+                  // Fallback voor alle andere gevallen (1, 2 of 4 cijfers)
+                  return (float)val;
   # 5. Verwachte Eindtijd (Timestamp variant)
   - platform: template
     name: "Verwachte Eindtijd"
@@ -225,13 +229,14 @@ sensor:
     icon: mdi:clock-check
     update_interval: 30s
     lambda: |-
-      float mins = id(resterende_minuten_id).state;
-      
-      if (isnan(mins) || mins <= 0 || id(machine_status).state != "Bezig") {
-        return NAN;
-      }
+        float mins = id(resterende_minuten_id).state;
 
-      return id(ha_time).now().timestamp + (mins * 60);         
+        if (isnan(mins) || mins <= 0) return NAN;
+
+        auto now = id(ha_time).now();
+        if (!now.is_valid()) return NAN;
+
+        return (float)(now.timestamp + ( (time_t)mins * 60 ));      
 switch:
   - platform: restart
     name: "${dev_name}_reboot"
